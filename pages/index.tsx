@@ -8,6 +8,7 @@ import Filter from '@/components/Filter'
 import Summary from '@/components/Summary'
 import Header from '@/components/Header'
 import ActionButtons from '@/components/ActionButtons'
+import { Warning } from 'phosphor-react'
 
 export default function Portfolio() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
@@ -85,8 +86,9 @@ export default function Portfolio() {
     setLoading(false)
   }
 
-  const parseAssets = () => {
-    const assetsData: Asset[] = input
+  const parseAssets = (inputData?: string) => {
+    const _input = inputData || input
+    const assetsData: Asset[] = _input
       .split(';')
       .filter(Boolean)
       .map((asset) => {
@@ -116,6 +118,21 @@ export default function Portfolio() {
       style={{ width: '90%' }}
     >
       <Header />
+      <div className={'flex justify-center'}>
+        <button
+          className={
+            'bg-emerald-400 rounded px-2 text-white my-1.5 font-semibold'
+          }
+          onClick={() => {
+            const exampleInput =
+              'BBAS3/ 500/ 23.43;STBP3/ 1000/ 9.40;TRPL4/ 500/ 23.96;ITSA4/ 1115/ 9.43;CSMG3/ 500/ 19.27;'
+            setInput(exampleInput)
+            parseAssets(exampleInput)
+          }}
+        >
+          Ver exemplo de uso
+        </button>
+      </div>
       <textarea
         value={input}
         onChange={handleInputChange}
@@ -123,9 +140,19 @@ export default function Portfolio() {
         className="w-full p-2 border rounded h-32 text-gray-800"
         disabled={loading}
       />
-      <span className={'text-center font-medium text-gray-400 text-sm italic'}>
-        Nenhum dado é enviado para servidores externos
-      </span>
+      <div className={'flex items-center'}>
+        <Warning
+          size={24}
+          className={'text-yellow-500 inline-block mr-2'}
+          weight={'fill'}
+        />
+        <span
+          className={'text-center font-medium text-gray-500 text-sm italic'}
+        >
+          Nenhum dado é enviado para servidores externos/Isto não é uma página
+          de recomendação de investimentos
+        </span>
+      </div>
       <ActionButtons
         clearAllAssets={clearAllAssets}
         loading={loading}
@@ -139,12 +166,12 @@ export default function Portfolio() {
           ></div>
         </div>
       )}
-      {filteredAssets.length > 0 && (
+      <div className={'border-b w-full'} />
+      <Summary assets={assets} />
+      <div className={'border-b w-full'} />
+      <Filter filterType={filterType} setFilterType={setFilterType} />
+      {filteredAssets.length > 0 ? (
         <>
-          <div className={'border-b w-full'} />
-          <Summary assets={assets} />
-          <div className={'border-b w-full'} />
-          <Filter filterType={filterType} setFilterType={setFilterType} />
           <div className={'sm:hidden w-full pt-4 flex justify-center'}>
             <span className={'text-sm text-gray-600 italic'}>
               A visualização do gráfico é melhor em telas maiores
@@ -164,6 +191,14 @@ export default function Portfolio() {
             setSortDirection={setSortDirection}
           />
         </>
+      ) : (
+        <div
+          className={
+            'flex justify-center items-center h-32 text-gray-500 text-lg'
+          }
+        >
+          Nenhum ativo encontrado
+        </div>
       )}
     </div>
   )

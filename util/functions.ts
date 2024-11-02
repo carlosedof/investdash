@@ -4,7 +4,7 @@ const formatCurrency = (value: number) => {
         .toFixed(2)
         .replace('.', ',')
         .replace(/\B(?=(\d{3})+(?!\d))/g, '.')}`
-    : ''
+    : `R$ 0,00`
 }
 
 export default formatCurrency
