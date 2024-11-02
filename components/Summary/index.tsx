@@ -1,7 +1,7 @@
 'use client'
 import React from 'react'
-import formatCurrency from '@/pages/util/functions'
-import Asset from '@/pages/types/asset'
+import formatCurrency from '@/util/functions'
+import Asset from '@/types/asset'
 import clsx from 'clsx'
 
 interface CardProps {
@@ -34,7 +34,7 @@ type SummaryProps = {
   assets: Asset[]
 }
 
-export const Summary: React.FC<SummaryProps> = ({ assets }) => {
+const Summary: React.FC<SummaryProps> = ({ assets }) => {
   const totalInvested = assets.reduce(
     (acc, asset) => acc + asset.averagePrice * asset.quantity,
     0,
@@ -88,3 +88,5 @@ export const Summary: React.FC<SummaryProps> = ({ assets }) => {
     </div>
   )
 }
+
+export default Summary

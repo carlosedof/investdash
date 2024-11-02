@@ -7,7 +7,7 @@ import {
   PieTooltipProps,
   ResponsivePie,
 } from '@nivo/pie'
-import formatCurrency from '@/pages/util/functions'
+import formatCurrency from '@/util/functions'
 
 interface Asset {
   id: string

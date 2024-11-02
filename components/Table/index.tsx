@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowsDownUp, ArrowUp, Trash } from 'phosphor-react'
 import React, { useEffect } from 'react'
-import formatCurrency from '@/pages/util/functions'
-import Asset from '@/pages/types/asset'
+import formatCurrency from '@/util/functions'
+import Asset from '@/types/asset'
 
 interface Props {
   assets: Asset[]

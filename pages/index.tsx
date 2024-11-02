@@ -1,11 +1,11 @@
 'use client'
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
-import AssetChart from '@/pages/components/PieChart'
-import Table from '@/pages/components/Table'
-import Asset from '@/pages/types/asset'
-import Filter from '@/pages/components/Filter'
-import { Summary } from '@/pages/components/Summary'
+import AssetChart from '@/components/PieChart'
+import Table from '@/components/Table'
+import Asset from '@/types/asset'
+import Filter from '@/components/Filter'
+import Summary from '@/components/Summary'
 import Link from 'next/link'
 
 export default function Portfolio() {
