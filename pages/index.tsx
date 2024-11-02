@@ -1,115 +1,208 @@
-import Image from "next/image";
-import localFont from "next/font/local";
+'use client'
+import axios from 'axios'
+import React, { useEffect, useState } from 'react'
+import AssetChart from '@/pages/components/PieChart'
+import Table from '@/pages/components/Table'
+import Asset from '@/pages/types/asset'
+import Filter from '@/pages/components/Filter'
+import { Summary } from '@/pages/components/Summary'
+import Link from 'next/link'
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
+export default function Portfolio() {
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+  const [sortColumn, setSortColumn] = useState<keyof Asset>('name')
+  const [assets, setAssets] = useState<Asset[]>([])
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [filterType, setFilterType] = useState('both')
 
-export default function Home() {
+  useEffect(() => {
+    const savedInput = localStorage.getItem('portfolioInput')
+    const savedAssets = localStorage.getItem('portfolioAssets')
+    if (savedInput) {
+      setInput(savedInput)
+    }
+    if (savedAssets) {
+      setAssets(JSON.parse(savedAssets))
+    }
+  }, [])
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>,
+  ) => {
+    const value = e.target.value
+    setInput(value)
+    localStorage.setItem('portfolioInput', value)
+  }
+
+  const clearAllAssets = () => {
+    setAssets([])
+    localStorage.removeItem('portfolioInput')
+    localStorage.removeItem('portfolioAssets')
+  }
+
+  const fetchAssetPrices = async (assetsData: Asset[]) => {
+    setProgress(0)
+    const updatedAssets = []
+    const totalAssets = assetsData.length
+
+    for (let i = 0; i < totalAssets; i++) {
+      const asset = assetsData[i]
+      try {
+        const response = await axios.get(
+          `/api/proxy?url=https://statusinvest.com.br/home/mainsearchquery?q=${asset.name}`,
+        )
+        const [data] = response.data
+        const currentPrice = parseFloat(data.price.replace(',', '.'))
+        const value = currentPrice * asset.quantity
+        updatedAssets.push({
+          id: asset.name,
+          name: data.code,
+          fullname: data.nameFormated,
+          value,
+          type: data.type,
+          quantity: asset.quantity,
+          currentPrice,
+          averagePrice: asset.averagePrice,
+        })
+      } catch (error) {
+        console.error(`Erro ao buscar preço para ${asset.name}:`, error)
+        updatedAssets.push({
+          ...asset,
+          id: asset.name,
+          value: 0,
+          averagePrice: 0,
+        })
+      }
+      setProgress(((i + 1) / totalAssets) * 100)
+      setAssets(updatedAssets)
+      localStorage.setItem('portfolioAssets', JSON.stringify(updatedAssets))
+      await new Promise((resolve) => setTimeout(resolve, 700))
+    }
+
+    setLoading(false)
+  }
+
+  const parseAssets = () => {
+    const assetsData: Asset[] = input
+      .split(';')
+      .filter(Boolean)
+      .map((asset) => {
+        const [name, quantity, averagePrice] = asset
+          .split('/')
+          .map((item) => item.trim())
+        return {
+          name,
+          quantity: parseFloat(quantity),
+          averagePrice: parseFloat(averagePrice),
+        } as Asset
+      })
+    setLoading(true)
+    fetchAssetPrices(assetsData)
+  }
+
+  const filteredAssets = assets.filter(
+    (asset) =>
+      filterType === 'both' ||
+      (filterType === 'stocks' && asset.type === 1) ||
+      (filterType === 'reit' && asset.type === 2),
+  )
+
   return (
     <div
-      className={`${geistSans.variable} ${geistMono.variable} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
+      className={`bg-gray-100 mx-auto space-y-6 font-[family-name:var(--font-geist-sans)] p-6 text-gray-800`}
+      style={{ width: '90%' }}
     >
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              pages/index.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      <h1 className={'text-center font-semibold text-lg'}>
+        Dashboard de investimentos
+      </h1>
+      <div className={'flex flex-col'}>
+        <span className={'text-center font-medium text-base'}>
+          Importe a carteira no formato informado no placeholder e veja
+          informações organizadas
+        </span>
+        <div className={'text-center space-x-2'}>
+          <span>Desenvolvido por:</span>
+          <Link
+            target={'_blank'}
+            href={'https://github.com/carlosedof'}
+            className={'text-center font-medium text-base underline'}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            Cadu Olivera
+          </Link>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+      </div>
+      <textarea
+        value={input}
+        onChange={handleInputChange}
+        placeholder="Informe os ativos no formato: 'VIVT3/300/25.10;BBSE3/400/32.15;' - Código/Quantidade/Preço médio"
+        className="w-full p-2 border rounded h-32 text-gray-800"
+        disabled={loading}
+      />
+      <span className={'text-center font-medium text-gray-400 text-sm italic'}>
+        Nenhum dado é enviado para servidores externos
+      </span>
+      <div
+        className={
+          'flex space-x-0 sm:space-y-0 space-y-2 sm:space-x-2 sm:flex-row flex-col'
+        }
+      >
+        <button
+          onClick={parseAssets}
+          className="flex-1 p-1 bg-blue-400 text-white rounded font-semibold"
+          disabled={loading}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          {loading ? 'Carregando dados...' : 'Consolidar dados'}
+        </button>
+        <button
+          onClick={() => parseAssets()}
+          className="flex-1 p-1 bg-amber-400 text-white rounded font-semibold"
+          disabled={loading}
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          Recarregar
+        </button>
+        <button
+          onClick={clearAllAssets}
+          className="flex-1 p-1 bg-red-400 text-white font-semibold rounded"
         >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
+          Limpar Tudo
+        </button>
+      </div>
+      {loading && (
+        <div className="w-full h-2 bg-gray-200 rounded overflow-hidden">
+          <div
+            className="bg-blue-500 h-full"
+            style={{ width: `${progress}%` }}
+          ></div>
+        </div>
+      )}
+      {filteredAssets.length > 0 && (
+        <>
+          <div className={'border-b w-full'} />
+          <Summary assets={assets} />
+          <div className={'border-b w-full'} />
+          <Filter filterType={filterType} setFilterType={setFilterType} />
+          <div className={'sm:hidden w-full pt-4 flex justify-center'}>
+            <span className={'text-sm text-gray-600 italic'}>
+              A visualização do gráfico é melhor em telas maiores
+            </span>
+          </div>
+          <AssetChart data={filteredAssets} />
+          <Table
+            assets={assets}
+            setAssets={setAssets}
+            input={input}
+            setInput={setInput}
+            setFilterType={setFilterType}
+            filterType={filterType}
+            sortColumn={sortColumn}
+            setSortColumn={setSortColumn}
+            sortDirection={sortDirection}
+            setSortDirection={setSortDirection}
           />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        </>
+      )}
     </div>
-  );
+  )
 }
