@@ -6,7 +6,8 @@ import Table from '@/components/Table'
 import Asset from '@/types/asset'
 import Filter from '@/components/Filter'
 import Summary from '@/components/Summary'
-import Link from 'next/link'
+import Header from '@/components/Header'
+import ActionButtons from '@/components/ActionButtons'
 
 export default function Portfolio() {
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
@@ -114,25 +115,7 @@ export default function Portfolio() {
       className={`bg-gray-100 mx-auto space-y-6 font-[family-name:var(--font-geist-sans)] p-6 text-gray-800`}
       style={{ width: '90%' }}
     >
-      <h1 className={'text-center font-semibold text-lg'}>
-        Dashboard de investimentos
-      </h1>
-      <div className={'flex flex-col'}>
-        <span className={'text-center font-medium text-base'}>
-          Importe a carteira no formato informado no placeholder e veja
-          informações organizadas
-        </span>
-        <div className={'text-center space-x-2'}>
-          <span>Desenvolvido por:</span>
-          <Link
-            target={'_blank'}
-            href={'https://github.com/carlosedof'}
-            className={'text-center font-medium text-base underline'}
-          >
-            Cadu Olivera
-          </Link>
-        </div>
-      </div>
+      <Header />
       <textarea
         value={input}
         onChange={handleInputChange}
@@ -143,32 +126,11 @@ export default function Portfolio() {
       <span className={'text-center font-medium text-gray-400 text-sm italic'}>
         Nenhum dado é enviado para servidores externos
       </span>
-      <div
-        className={
-          'flex space-x-0 sm:space-y-0 space-y-2 sm:space-x-2 sm:flex-row flex-col'
-        }
-      >
-        <button
-          onClick={parseAssets}
-          className="flex-1 p-1 bg-blue-400 text-white rounded font-semibold"
-          disabled={loading}
-        >
-          {loading ? 'Carregando dados...' : 'Consolidar dados'}
-        </button>
-        <button
-          onClick={() => parseAssets()}
-          className="flex-1 p-1 bg-amber-400 text-white rounded font-semibold"
-          disabled={loading}
-        >
-          Recarregar
-        </button>
-        <button
-          onClick={clearAllAssets}
-          className="flex-1 p-1 bg-red-400 text-white font-semibold rounded"
-        >
-          Limpar Tudo
-        </button>
-      </div>
+      <ActionButtons
+        clearAllAssets={clearAllAssets}
+        loading={loading}
+        parseAssets={parseAssets}
+      />
       {loading && (
         <div className="w-full h-2 bg-gray-200 rounded overflow-hidden">
           <div
