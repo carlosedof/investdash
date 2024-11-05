@@ -88,6 +88,7 @@ export default function Portfolio() {
 
   const parseAssets = (inputData?: string) => {
     const _input = inputData || input
+    console.log(_input)
     const assetsData: Asset[] = _input
       .split(';')
       .filter(Boolean)
@@ -156,7 +157,7 @@ export default function Portfolio() {
       <ActionButtons
         clearAllAssets={clearAllAssets}
         loading={loading}
-        parseAssets={parseAssets}
+        parseAssets={() => parseAssets()}
       />
       {loading && (
         <div className="w-full h-2 bg-gray-200 rounded overflow-hidden">
