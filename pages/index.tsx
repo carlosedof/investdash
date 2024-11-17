@@ -1,6 +1,6 @@
 'use client'
 import axios from 'axios'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import AssetChart from '@/components/PieChart'
 import Table from '@/components/Table'
 import Asset from '@/types/asset'
@@ -15,6 +15,7 @@ export default function Portfolio() {
   const [sortColumn, setSortColumn] = useState<keyof Asset>('name')
   const [assets, setAssets] = useState<Asset[]>([])
   const [input, setInput] = useState('')
+  const [bySegment, setBySegment] = useState(false)
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [filterType, setFilterType] = useState('both')
@@ -44,6 +45,33 @@ export default function Portfolio() {
     localStorage.removeItem('portfolioAssets')
   }
 
+  const totalInvested = useMemo(
+    () =>
+      assets.reduce(
+        (acc, asset) => acc + asset.averagePrice * asset.quantity,
+        0,
+      ),
+    [assets],
+  )
+
+  const getStockSegment = useCallback(async (ticker: string) => {
+    const hasFundNr = ticker.includes('11')
+    if (hasFundNr) {
+      const url = `https://investidor10.com.br/api/fii/searchquery/${ticker}/compare/`
+      const call = await axios.get(`/api/proxy?url=${url}`)
+      const tickerId = call?.data?.[0]?.ticker_id
+      const detailUrl = `https://investidor10.com.br/api/fii/comparador/table/${tickerId}`
+      const detailCall = await axios.get<string>(`/api/proxy?url=${detailUrl}`)
+      const result = (detailCall?.data as any)?.data?.[0]
+      if (result) {
+        return {
+          fiiType: result.type,
+          segment: result.segment,
+        }
+      }
+    }
+  }, [])
+
   const fetchAssetPrices = async (assetsData: Asset[]) => {
     setProgress(0)
     const updatedAssets = []
@@ -58,6 +86,7 @@ export default function Portfolio() {
         const [data] = response.data
         const currentPrice = parseFloat(data.price.replace(',', '.'))
         const value = currentPrice * asset.quantity
+        const segment = await getStockSegment(asset.name)
         updatedAssets.push({
           id: asset.name,
           name: data.code,
@@ -67,6 +96,7 @@ export default function Portfolio() {
           quantity: asset.quantity,
           currentPrice,
           averagePrice: asset.averagePrice,
+          ...segment,
         })
       } catch (error) {
         console.error(`Erro ao buscar preço para ${asset.name}:`, error)
@@ -82,13 +112,11 @@ export default function Portfolio() {
       localStorage.setItem('portfolioAssets', JSON.stringify(updatedAssets))
       await new Promise((resolve) => setTimeout(resolve, 700))
     }
-
     setLoading(false)
   }
 
   const parseAssets = (inputData?: string) => {
     const _input = inputData || input
-    console.log(_input)
     const assetsData: Asset[] = _input
       .split(';')
       .filter(Boolean)
@@ -147,12 +175,18 @@ export default function Portfolio() {
           className={'text-yellow-500 inline-block mr-2'}
           weight={'fill'}
         />
-        <span
-          className={'text-center font-medium text-gray-500 text-sm italic'}
-        >
-          Nenhum dado é enviado para servidores externos/Isto não é uma página
-          de recomendação de investimentos
-        </span>
+        <div className={'flex flex-col items-start'}>
+          <span
+            className={'text-center font-medium text-gray-500 text-sm italic'}
+          >
+            Nenhum dado é enviado para servidores externos
+          </span>
+          <span
+            className={'text-center font-medium text-gray-500 text-sm italic'}
+          >
+            Isto não é uma página de recomendação de investimentos
+          </span>
+        </div>
       </div>
       <ActionButtons
         clearAllAssets={clearAllAssets}
@@ -170,7 +204,12 @@ export default function Portfolio() {
       <div className={'border-b w-full'} />
       <Summary assets={assets} />
       <div className={'border-b w-full'} />
-      <Filter filterType={filterType} setFilterType={setFilterType} />
+      <Filter
+        filterType={filterType}
+        setFilterType={setFilterType}
+        bySegment={bySegment}
+        onChangeBySegment={setBySegment}
+      />
       {filteredAssets.length > 0 ? (
         <>
           <div className={'sm:hidden w-full pt-4 flex justify-center'}>
@@ -178,7 +217,11 @@ export default function Portfolio() {
               A visualização do gráfico é melhor em telas maiores
             </span>
           </div>
-          <AssetChart data={filteredAssets} />
+          <AssetChart
+            data={filteredAssets}
+            bySegment={bySegment}
+            total={totalInvested}
+          />
           <Table
             assets={assets}
             setAssets={setAssets}

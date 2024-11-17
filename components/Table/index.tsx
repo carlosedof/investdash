@@ -72,7 +72,17 @@ export default function Table({
   const sortedAssets = [...filteredAssets].sort((a, b) => {
     const aValue = a[sortColumn] || 0
     const bValue = b[sortColumn] || 0
-
+    if (sortColumn === 'profitability') {
+      const aProfitability =
+        a.currentPrice * a.quantity - a.averagePrice * a.quantity
+      const bProfitability =
+        b.currentPrice * b.quantity - b.averagePrice * b.quantity
+      if (aProfitability < bProfitability)
+        return sortDirection === 'asc' ? -1 : 1
+      if (aProfitability > bProfitability)
+        return sortDirection === 'asc' ? 1 : -1
+      return 0
+    }
     if (aValue < bValue) return sortDirection === 'asc' ? -1 : 1
     if (aValue > bValue) return sortDirection === 'asc' ? 1 : -1
     return 0
@@ -169,9 +179,20 @@ export default function Table({
           </th>
           <th
             className="border-b cursor-pointer"
-            onClick={() => handleSort('averagePrice')}
+            onClick={() => handleSort('profitability')}
           >
-            <div className="flex w-full justify-center">Rentabilidade</div>
+            <div className="flex w-full justify-center">
+              Rentabilidade{' '}
+              {sortColumn === 'profitability' &&
+                (sortDirection === 'asc' ? (
+                  <ArrowUp size={16} />
+                ) : (
+                  <ArrowDown size={16} />
+                ))}
+              <span className="text-gray-400 ml-1">
+                <ArrowsDownUp size={16} />
+              </span>
+            </div>
           </th>
           <th
             className="hidden sm:table-cell border-b cursor-pointer"

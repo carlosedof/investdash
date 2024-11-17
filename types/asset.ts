@@ -8,6 +8,7 @@ interface Asset {
   averagePrice: number
   currentPrice: number
   gain?: number
+  profitability?: number
 }
 
 export default Asset
