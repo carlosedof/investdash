@@ -45,15 +45,6 @@ export default function Portfolio() {
     localStorage.removeItem('portfolioAssets')
   }
 
-  const totalInvested = useMemo(
-    () =>
-      assets.reduce(
-        (acc, asset) => acc + asset.averagePrice * asset.quantity,
-        0,
-      ),
-    [assets],
-  )
-
   const getStockSegment = useCallback(async (ticker: string) => {
     const hasFundNr = ticker.includes('11')
     if (hasFundNr) {
@@ -139,6 +130,15 @@ export default function Portfolio() {
       filterType === 'both' ||
       (filterType === 'stocks' && asset.type === 1) ||
       (filterType === 'reit' && asset.type === 2),
+  )
+
+  const totalInvested = useMemo(
+    () =>
+      filteredAssets.reduce(
+        (acc, asset) => acc + asset.averagePrice * asset.quantity,
+        0,
+      ),
+    [filteredAssets],
   )
 
   return (

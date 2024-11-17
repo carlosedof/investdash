@@ -35,7 +35,7 @@ export default function Table({
     if (savedAssets) {
       setAssets(JSON.parse(savedAssets))
     }
-  }, [])
+  }, [setAssets, setInput])
 
   const removeAsset = (assetToRemove: Asset) => {
     const updatedAssets = assets.filter(
