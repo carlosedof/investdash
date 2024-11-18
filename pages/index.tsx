@@ -8,9 +8,12 @@ import Filter from '@/components/Filter'
 import Summary from '@/components/Summary'
 import Header from '@/components/Header'
 import ActionButtons from '@/components/ActionButtons'
-import { Warning } from 'phosphor-react'
+import ExampleButton from '@/components/ExampleButton'
+import WarningBlock from '@/components/Warning'
+import InfoBlock from '@/components/InfoBlock'
 
 export default function Portfolio() {
+  const [infoVisible, setInfoVisible] = useState<string>()
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [sortColumn, setSortColumn] = useState<keyof Asset>('name')
   const [assets, setAssets] = useState<Asset[]>([])
@@ -45,6 +48,14 @@ export default function Portfolio() {
     localStorage.removeItem('portfolioAssets')
   }
 
+  const exportAssets = useCallback(() => {
+    navigator.clipboard.writeText(
+      assets.map((a) => `${a.name}/${a.quantity}/${a.averagePrice}`).join(';'),
+    )
+    setInfoVisible(`Carteira copiada para a área de transferência`)
+    setTimeout(() => setInfoVisible(undefined), 4000)
+  }, [assets])
+
   const getStockSegment = useCallback(async (ticker: string) => {
     const hasFundNr = ticker.includes('11')
     if (hasFundNr) {
@@ -74,21 +85,23 @@ export default function Portfolio() {
         const response = await axios.get(
           `/api/proxy?url=https://statusinvest.com.br/home/mainsearchquery?q=${asset.name}`,
         )
-        const [data] = response.data
-        const currentPrice = parseFloat(data.price.replace(',', '.'))
-        const value = currentPrice * asset.quantity
-        const segment = await getStockSegment(asset.name)
-        updatedAssets.push({
-          id: asset.name,
-          name: data.code,
-          fullname: data.nameFormated,
-          value,
-          type: data.type,
-          quantity: asset.quantity,
-          currentPrice,
-          averagePrice: asset.averagePrice,
-          ...segment,
-        })
+        if (response.data.length) {
+          const [data] = response.data
+          const currentPrice = parseFloat(data.price.replace(',', '.'))
+          const value = currentPrice * asset.quantity
+          const segment = await getStockSegment(asset.name)
+          updatedAssets.push({
+            id: asset.name,
+            name: data.code,
+            fullname: data.nameFormated,
+            value,
+            type: data.type,
+            quantity: asset.quantity,
+            currentPrice,
+            averagePrice: asset.averagePrice,
+            ...segment,
+          })
+        }
       } catch (error) {
         console.error(`Erro ao buscar preço para ${asset.name}:`, error)
         updatedAssets.push({
@@ -147,21 +160,7 @@ export default function Portfolio() {
       style={{ width: '90%' }}
     >
       <Header />
-      <div className={'flex justify-center'}>
-        <button
-          className={
-            'bg-emerald-400 rounded px-2 text-white my-1.5 font-semibold'
-          }
-          onClick={() => {
-            const exampleInput =
-              'BBAS3/ 500/ 23.43;STBP3/ 1000/ 9.40;TRPL4/ 500/ 23.96;ITSA4/ 1115/ 9.43;CSMG3/ 500/ 19.27;'
-            setInput(exampleInput)
-            parseAssets(exampleInput)
-          }}
-        >
-          Ver exemplo de uso
-        </button>
-      </div>
+      <ExampleButton parseAssets={parseAssets} setInput={setInput} />
       <textarea
         value={input}
         onChange={handleInputChange}
@@ -169,29 +168,16 @@ export default function Portfolio() {
         className="w-full p-2 border rounded h-32 text-gray-800"
         disabled={loading}
       />
-      <div className={'flex items-center'}>
-        <Warning
-          size={24}
-          className={'text-yellow-500 inline-block mr-2'}
-          weight={'fill'}
-        />
-        <div className={'flex flex-col items-start'}>
-          <span
-            className={'text-center font-medium text-gray-500 text-sm italic'}
-          >
-            Nenhum dado é enviado para servidores externos
-          </span>
-          <span
-            className={'text-center font-medium text-gray-500 text-sm italic'}
-          >
-            Isto não é uma página de recomendação de investimentos
-          </span>
-        </div>
-      </div>
+      <WarningBlock />
       <ActionButtons
         clearAllAssets={clearAllAssets}
         loading={loading}
         parseAssets={() => parseAssets()}
+        exportAssets={exportAssets}
+      />
+      <InfoBlock
+        onClose={() => setInfoVisible(undefined)}
+        content={infoVisible}
       />
       {loading && (
         <div className="w-full h-2 bg-gray-200 rounded overflow-hidden">

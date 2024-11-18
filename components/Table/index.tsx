@@ -97,7 +97,7 @@ export default function Table({
             onClick={() => handleSort('name')}
           >
             <div className="flex">
-              Ticket{' '}
+              Ticker{' '}
               {sortColumn === 'name' &&
                 (sortDirection === 'asc' ? (
                   <ArrowUp size={16} />
