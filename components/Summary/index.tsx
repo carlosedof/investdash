@@ -36,7 +36,7 @@ type SummaryProps = {
 
 const Summary: React.FC<SummaryProps> = ({ assets }) => {
   const totalInvested = assets.reduce(
-    (acc, asset) => acc + asset.averagePrice * asset.quantity,
+    (acc, asset) => acc + (asset.currentPrice || 0) * asset.quantity,
     0,
   )
 
@@ -48,7 +48,7 @@ const Summary: React.FC<SummaryProps> = ({ assets }) => {
   const gainPercentage = totalInvested ? (totalGain / totalInvested) * 100 : 0
 
   const totalStocks = assets
-    .filter((asset) => asset.type === 1)
+    .filter((asset) => asset.type !== 2)
     .reduce((acc, asset) => acc + (asset.value || 0), 0)
   const totalFIIs = assets
     .filter((asset) => asset.type === 2)

@@ -65,7 +65,7 @@ export default function Table({
   const filteredAssets = assets.filter(
     (asset) =>
       filterType === 'both' ||
-      (filterType === 'stocks' && asset.type === 1) ||
+      (filterType === 'stocks' && asset.type !== 2) ||
       (filterType === 'reit' && asset.type === 2),
   )
 
@@ -215,40 +215,46 @@ export default function Table({
         </tr>
       </thead>
       <tbody>
-        {sortedAssets.map((asset) => (
-          <tr key={asset.id}>
-            <td className="border-b p-1">{asset.name}</td>
-            <td className="hidden sm:table-cell border-b text-center p-1">
-              {formatCurrency(asset.averagePrice)}
-            </td>
-            <td className="hidden sm:table-cell border-b text-center p-1">
-              {formatCurrency(asset.currentPrice)}
-            </td>
-            <td className="hidden sm:table-cell border-b text-center p-1">
-              {asset.quantity}
-            </td>
-            <td className="border-b text-center p-1">
-              {formatCurrency(asset.value || 0)}
-            </td>
-            <td className="border-b text-center p-1">
-              {formatCurrency(
-                asset.currentPrice * asset.quantity -
-                  asset.averagePrice * asset.quantity,
-              )}
-            </td>
-            <td className="hidden sm:table-cell border-b text-center p-1">
-              {asset.type === 1 ? 'Ação' : 'FII'}
-            </td>
-            <td className="border-b text-center p-1">
-              <button
-                onClick={() => removeAsset(asset)}
-                className="text-red-500"
-              >
-                <Trash size={20} />
-              </button>
-            </td>
-          </tr>
-        ))}
+        {sortedAssets.map((asset) => {
+          let type = asset.type === 1 ? 'Ação' : 'FII'
+          if (asset.type === 6) {
+            type = 'ETF'
+          }
+          return (
+            <tr key={asset.id}>
+              <td className="border-b p-1">{asset.name}</td>
+              <td className="hidden sm:table-cell border-b text-center p-1">
+                {formatCurrency(asset.averagePrice)}
+              </td>
+              <td className="hidden sm:table-cell border-b text-center p-1">
+                {formatCurrency(asset.currentPrice)}
+              </td>
+              <td className="hidden sm:table-cell border-b text-center p-1">
+                {asset.quantity}
+              </td>
+              <td className="border-b text-center p-1">
+                {formatCurrency(asset.value || 0)}
+              </td>
+              <td className="border-b text-center p-1">
+                {formatCurrency(
+                  asset.currentPrice * asset.quantity -
+                    asset.averagePrice * asset.quantity,
+                )}
+              </td>
+              <td className="hidden sm:table-cell border-b text-center p-1">
+                {type}
+              </td>
+              <td className="border-b text-center p-1">
+                <button
+                  onClick={() => removeAsset(asset)}
+                  className="text-red-500"
+                >
+                  <Trash size={20} />
+                </button>
+              </td>
+            </tr>
+          )
+        })}
       </tbody>
     </table>
   )

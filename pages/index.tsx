@@ -11,6 +11,7 @@ import ActionButtons from '@/components/ActionButtons'
 import ExampleButton from '@/components/ExampleButton'
 import WarningBlock from '@/components/Warning'
 import InfoBlock from '@/components/InfoBlock'
+import { Download } from 'phosphor-react'
 
 export default function Portfolio() {
   const [infoVisible, setInfoVisible] = useState<string>()
@@ -56,20 +57,43 @@ export default function Portfolio() {
     setTimeout(() => setInfoVisible(undefined), 4000)
   }, [assets])
 
+  async function handleUpload(event: any) {
+    const formData = new FormData()
+    formData.append('file', event.target.files[0])
+
+    const res = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    })
+    const text = await res.text()
+    setInput(text)
+  }
+
   const getStockSegment = useCallback(async (ticker: string) => {
     const hasFundNr = ticker.includes('11')
     if (hasFundNr) {
-      const url = `https://investidor10.com.br/api/fii/searchquery/${ticker}/compare/`
-      const call = await axios.get(`/api/proxy?url=${url}`)
-      const tickerId = call?.data?.[0]?.ticker_id
-      const detailUrl = `https://investidor10.com.br/api/fii/comparador/table/${tickerId}`
-      const detailCall = await axios.get<string>(`/api/proxy?url=${detailUrl}`)
-      const result = (detailCall?.data as any)?.data?.[0]
-      if (result) {
-        return {
-          fiiType: result.type,
-          segment: result.segment,
+      try {
+        const url = `https://investidor10.com.br/api/fii/searchquery/${ticker}/compare/`
+        const call = await axios.get(`/api/proxy?url=${url}`)
+        const tickerId = call?.data?.[0]?.ticker_id
+        if (!tickerId) {
+          console.warn(`Ticker ID não encontrado para ${ticker}`)
+          return null
         }
+        const detailUrl = `https://investidor10.com.br/api/fii/comparador/table/${tickerId}`
+        const detailCall = await axios.get<string>(
+          `/api/proxy?url=${detailUrl}`,
+        )
+        const result = (detailCall?.data as any)?.data?.[0]
+        if (result) {
+          return {
+            fiiType: result.type,
+            segment: result.segment,
+          }
+        }
+      } catch (e: any) {
+        console.error(`Erro ao buscar segmento para ${ticker}:`, e)
+        return null
       }
     }
   }, [])
@@ -138,12 +162,13 @@ export default function Portfolio() {
     fetchAssetPrices(assetsData)
   }
 
-  const filteredAssets = assets.filter(
-    (asset) =>
+  const filteredAssets = assets.filter((asset) => {
+    return (
       filterType === 'both' ||
-      (filterType === 'stocks' && asset.type === 1) ||
-      (filterType === 'reit' && asset.type === 2),
-  )
+      (filterType === 'stocks' && asset.type !== 2) ||
+      (filterType === 'reit' && asset.type === 2)
+    )
+  })
 
   const totalInvested = useMemo(
     () =>
@@ -161,13 +186,27 @@ export default function Portfolio() {
     >
       <Header />
       <ExampleButton parseAssets={parseAssets} setInput={setInput} />
-      <textarea
-        value={input}
-        onChange={handleInputChange}
-        placeholder="Informe os ativos no formato: 'VIVT3/300/25.10;BBSE3/400/32.15;' - Código/Quantidade/Preço médio"
-        className="w-full p-2 border rounded h-32 text-gray-800"
-        disabled={loading}
-      />
+      <div className={'space-y-3'}>
+        <textarea
+          value={input}
+          onChange={handleInputChange}
+          placeholder="Informe os ativos no formato: 'VIVT3/300/25.10;BBSE3/400/32.15;' - Código/Quantidade/Preço médio"
+          className="w-full p-2 border rounded h-32 text-gray-800"
+          disabled={loading}
+        />
+        <div className="flex flex-col items-start gap-2">
+          <label className="relative inline-block px-6 min-w-[200px] cursor-pointer shadow transition-colors py-1 bg-gray-600 text-white rounded font-semibold">
+            <Download size={16} className={'inline-block mr-1'} />
+            <input
+              type="file"
+              accept=".xlsx"
+              onChange={handleUpload}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+            Importação clear
+          </label>
+        </div>
+      </div>
       <WarningBlock />
       <ActionButtons
         clearAllAssets={clearAllAssets}
