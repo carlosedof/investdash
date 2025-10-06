@@ -66,7 +66,8 @@ export default function Table({
     (asset) =>
       filterType === 'both' ||
       (filterType === 'stocks' && asset.type !== 2) ||
-      (filterType === 'reit' && asset.type === 2),
+      (filterType === 'reit' && asset.type === 2) ||
+      (filterType === 'bdr' && asset.type === 4),
   )
 
   const sortedAssets = [...filteredAssets].sort((a, b) => {
@@ -219,6 +220,9 @@ export default function Table({
           let type = asset.type === 1 ? 'Ação' : 'FII'
           if (asset.type === 6) {
             type = 'ETF'
+          }
+          if (asset.type === 4) {
+            type = 'BDR'
           }
           return (
             <tr key={asset.id}>

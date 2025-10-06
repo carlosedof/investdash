@@ -27,7 +27,7 @@ export default function Filter({
             }}
             className={`w-24 p-1 bg-blue-400 text-white rounded font-semibold ${filterType === 'both' ? 'bg-blue-600' : ''}`}
           >
-            Ambos
+            Todos
           </button>
           <button
             onClick={() => {
@@ -43,6 +43,15 @@ export default function Filter({
             className={`w-24 p-1 bg-blue-400 text-white rounded font-semibold ${filterType === 'reit' ? 'bg-blue-600' : ''}`}
           >
             FIIs
+          </button>
+          <button
+            onClick={() => {
+              onChangeBySegment(false)
+              setFilterType('bdr')
+            }}
+            className={`w-24 p-1 bg-blue-400 text-white rounded font-semibold ${filterType === 'bdr' ? 'bg-blue-600' : ''}`}
+          >
+            BDRs
           </button>
         </div>
       </div>

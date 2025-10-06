@@ -48,10 +48,13 @@ const Summary: React.FC<SummaryProps> = ({ assets }) => {
   const gainPercentage = totalInvested ? (totalGain / totalInvested) * 100 : 0
 
   const totalStocks = assets
-    .filter((asset) => asset.type !== 2)
+    .filter((asset) => asset.type === 1)
     .reduce((acc, asset) => acc + (asset.value || 0), 0)
   const totalFIIs = assets
     .filter((asset) => asset.type === 2)
+    .reduce((acc, asset) => acc + (asset.value || 0), 0)
+  const totalBDRs = assets
+    .filter((asset) => asset.type === 4)
     .reduce((acc, asset) => acc + (asset.value || 0), 0)
 
   return (
@@ -74,6 +77,11 @@ const Summary: React.FC<SummaryProps> = ({ assets }) => {
         label={'Total em FIIs'}
         value={formatCurrency(totalFIIs)}
         color={'bg-pink-600'}
+      />
+      <Card
+        label={'Total em BDRs'}
+        value={formatCurrency(totalBDRs)}
+        color={'bg-blue-600'}
       />
       <Card
         label={'Rentab. Abs'}

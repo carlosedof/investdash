@@ -152,10 +152,14 @@ export default function Portfolio() {
         const [name, quantity, averagePrice] = asset
           .split('/')
           .map((item) => item.trim())
+        let type = 1 // 1: ação, 2: FII, 3: BDR
+        if (name.endsWith('11')) type = 2
+        else if (name.endsWith('34')) type = 3
         return {
           name,
           quantity: parseFloat(quantity),
           averagePrice: parseFloat(averagePrice),
+          type,
         } as Asset
       })
     setLoading(true)
@@ -165,8 +169,9 @@ export default function Portfolio() {
   const filteredAssets = assets.filter((asset) => {
     return (
       filterType === 'both' ||
-      (filterType === 'stocks' && asset.type !== 2) ||
-      (filterType === 'reit' && asset.type === 2)
+      (filterType === 'stocks' && asset.type === 1) ||
+      (filterType === 'reit' && asset.type === 2) ||
+      (filterType === 'bdr' && asset.type === 4)
     )
   })
 
